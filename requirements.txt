@@ -1,0 +1,7 @@
+# Runtime
+anthropic==0.28.0      # vision-language model (page image -> structured JSON)
+pymupdf==1.24.5        # PDF page rasterisation (fitz)
+mcp==1.2.0             # MCP stdio server (the Machine OS spoke)
+
+# Dev
+pytest==8.2.2

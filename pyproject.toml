@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-extractor"
+version = "0.1.0"
+description = "Turn messy financial PDFs into validated, structured JSON with a vision-language model. A Machine OS spoke."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Shubham Prajapati", email = "adiyogibooks@gmail.com" }]
+keywords = ["agent-extractor", "vlm", "ocr", "pdf", "extraction", "mcp", "financial"]
+dependencies = [
+    "anthropic>=0.28.0",
+    "pymupdf>=1.24.0",
+    "mcp>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+# Console entry so the spoke is launchable via:
+#   uvx --from git+https://github.com/shubham0086/agent-extractor agent-extractor
+agent-extractor = "src.mcp_server:main"
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
