@@ -18,6 +18,13 @@ Tools:
   list_schemas        — the built-in extraction schemas and their fields
   extract_page        — extract one PDF page into validated structured JSON
   extract_document    — extract every (or selected) page with one schema
+  info                — read-only spoke introspection (name, version, available tool names)
+
+Each tool carries MCP behaviour-hint annotations (readOnlyHint / destructiveHint /
+idempotentHint / openWorldHint), held as a plain dict on each TOOLS entry so the static
+metadata stays import-light; main() maps them onto types.ToolAnnotations. list_schemas
+and info are pure/read-only/closed-world. The extract_* tools read a local PDF (no writes,
+non-destructive) but call out to a vision-language model, so they are openWorldHint=True.
 """
 import asyncio
 import json
@@ -28,10 +35,20 @@ from .schema import BUILTINS
 
 # Imported lazily inside main() so unit tests never need the mcp package installed.
 
+VERSION = "0.1.0"  # keep in sync with pyproject.toml [project].version
+
 TOOLS = [
     {
         "name": "list_schemas",
         "description": "List the built-in extraction schemas and their fields.",
+        # Pure, no network, no writes.
+        "annotations": {
+            "title": "List extraction schemas",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
         "inputSchema": {"type": "object", "properties": {}, "required": []},
     },
     {
@@ -42,6 +59,14 @@ TOOLS = [
             "fields, type checks, and financial coherence: totals and statement "
             "identities)."
         ),
+        # Reads a local PDF (no writes -> non-destructive), but calls a VLM -> open world.
+        "annotations": {
+            "title": "Extract one PDF page",
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": True,
+        },
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -62,6 +87,14 @@ TOOLS = [
             "Returns per-page results and an overall ok flag (true only if every page "
             "validated)."
         ),
+        # Reads a local PDF (no writes -> non-destructive), but calls a VLM -> open world.
+        "annotations": {
+            "title": "Extract a whole PDF",
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": True,
+        },
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -76,11 +109,35 @@ TOOLS = [
             "required": ["pdf_path", "schema"],
         },
     },
+    {
+        "name": "info",
+        "description": (
+            "Return this spoke's name, version, and the list of available tool names. "
+            "Read-only introspection; takes no arguments."
+        ),
+        # Pure, no network, no writes.
+        "annotations": {
+            "title": "Spoke info",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
+        "inputSchema": {"type": "object", "properties": {}, "required": []},
+    },
 ]
 
 
 def _dispatch(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
     """Pure dispatch — separated from transport so it is unit-testable offline."""
+    if name == "info":
+        # Read-only introspection; resolved before the engine so it stays keyless.
+        return {
+            "name": "agent-extractor",
+            "version": VERSION,
+            "tools": [t["name"] for t in TOOLS],
+        }
+
     if name == "list_schemas":
         return {
             "schemas": {
@@ -120,6 +177,9 @@ def main() -> None:
                 name=t["name"],
                 description=t["description"],
                 inputSchema=t["inputSchema"],
+                # Behaviour-hint annotations (readOnlyHint/destructiveHint/etc.) carried
+                # on each TOOLS entry; mapped here onto the SDK's ToolAnnotations model.
+                annotations=types.ToolAnnotations(**t["annotations"]),
             )
             for t in TOOLS
         ]

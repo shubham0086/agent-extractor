@@ -1,0 +1,37 @@
+{
+  "_comment": "Cross-runtime example: register agent-extractor as a stdio MCP server. This is a documentation/example file, not loaded by the package. Copy the inner server block into your client's own config (Cursor: .cursor/mcp.json; Cline: cline_mcp_settings.json; Codex / Claude Desktop: their mcpServers block). The extract_* tools call a vision-language model, so set ANTHROPIC_API_KEY; list_schemas and info work without it.",
+
+  "mcpServers": {
+    "agent-extractor": {
+      "_recommended": "uvx launch straight from GitHub, no local clone or install needed.",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/shubham0086/agent-extractor",
+        "agent-extractor"
+      ],
+      "env": {
+        "ANTHROPIC_API_KEY": "sk-ant-..."
+      }
+    },
+
+    "agent-extractor-local-uvx": {
+      "_comment": "If you have the repo checked out locally, point uvx at the path instead.",
+      "command": "uvx",
+      "args": ["--from", ".", "agent-extractor"],
+      "env": {
+        "ANTHROPIC_API_KEY": "sk-ant-..."
+      }
+    },
+
+    "agent-extractor-local-python": {
+      "_comment": "No uv? Run the module directly after `pip install -e .` (or `pip install -r requirements.txt`) in the repo. Set cwd to the repo root.",
+      "command": "python",
+      "args": ["-m", "src.mcp_server"],
+      "cwd": "/absolute/path/to/agent-extractor",
+      "env": {
+        "ANTHROPIC_API_KEY": "sk-ant-..."
+      }
+    }
+  }
+}
