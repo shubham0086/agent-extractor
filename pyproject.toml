@@ -28,6 +28,10 @@ agent-extractor = "src.mcp_server:main"
 [tool.setuptools]
 packages = ["src"]
 
+[project.urls]
+Homepage = "https://github.com/shubham0086/agent-extractor"
+Repository = "https://github.com/shubham0086/agent-extractor"
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
